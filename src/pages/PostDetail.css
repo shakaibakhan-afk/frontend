@@ -1,0 +1,16 @@
+.post-detail {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.post-detail-container {
+  padding: 20px 0;
+}
+
+.post-detail-error {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
