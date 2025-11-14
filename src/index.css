@@ -1,3 +1,6 @@
+/* Import Instagram-like font for logo */
+@import url('https://fonts.googleapis.com/css2?family=Lobster+Two:wght@400;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -13,6 +16,24 @@
   --text-secondary: #8e8e8e;
   --error-color: #ed4956;
   --like-color: #ed4956;
+}
+
+/* Dark Mode Theme */
+[data-theme="dark"] {
+  --primary-color: #0095f6;
+  --secondary-color: #fafafa;
+  --border-color: #363636;
+  --bg-color: #000000;
+  --text-color: #fafafa;
+  --text-secondary: #a8a8a8;
+  --error-color: #ed4956;
+  --like-color: #ed4956;
+  --card-bg: #000000;
+}
+
+/* Override for cards/containers in dark mode */
+[data-theme="dark"] {
+  --card-bg: #000000;
 }
 
 body {

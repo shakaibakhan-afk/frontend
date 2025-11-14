@@ -1,7 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { usersAPI, postsAPI, socialAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { getProfilePictureUrl, getPostImageUrl } from '../utils/imageUtils';
+import EditProfile from '../components/EditProfile';
+import StoryViewer from '../components/StoryViewer';
+import CreateStory from '../components/CreateStory';
 import './Profile.css';
 
 function Profile() {
@@ -11,18 +16,30 @@ function Profile() {
   const [posts, setPosts] = useState([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [hasStory, setHasStory] = useState(false);
+  const [viewingStory, setViewingStory] = useState(false);
+  const [showCreateStory, setShowCreateStory] = useState(false);
 
-  useEffect(() => {
-    loadProfile();
-  }, [username]);
-
-  const loadProfile = async () => {
+  // Use useCallback to memoize loadProfile function
+  const loadProfile = useCallback(async () => {
     try {
+      setLoading(true);
+      setErrorMessage('');
       const userData = await usersAPI.getUserByUsername(username);
       setProfile(userData);
       
       const userPosts = await postsAPI.getUserPosts(userData.id);
       setPosts(userPosts);
+      
+      // Check if user has active stories
+      try {
+        const userStories = await socialAPI.getUserStories(userData.id);
+        setHasStory(userStories.length > 0);
+      } catch (err) {
+        setHasStory(false);
+      }
       
       // Check if following
       if (currentUser && userData.id !== currentUser.id) {
@@ -31,33 +48,51 @@ function Profile() {
       }
     } catch (error) {
       console.error('Failed to load profile:', error);
+      setProfile(null);
+      setPosts([]);
+      setHasStory(false);
+
+      if (error.response?.status === 404) {
+        setErrorMessage('User not found');
+      } else if (error.response?.status === 403) {
+        setErrorMessage('Follow this user to view their profile');
+      } else {
+        setErrorMessage('Failed to load profile');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [username, currentUser]);
 
-  const handleFollow = async () => {
+  useEffect(() => {
+    loadProfile();
+  }, [loadProfile]);
+
+  const handleFollow = useCallback(async () => {
     try {
       if (isFollowing) {
         await socialAPI.unfollowUser(profile.id);
         setIsFollowing(false);
-        setProfile({...profile, followers_count: profile.followers_count - 1});
+        setProfile(prev => ({...prev, followers_count: prev.followers_count - 1}));
+        toast.success(`Unfollowed ${profile.username}`);
       } else {
         await socialAPI.followUser(profile.id);
         setIsFollowing(true);
-        setProfile({...profile, followers_count: profile.followers_count + 1});
+        setProfile(prev => ({...prev, followers_count: prev.followers_count + 1}));
+        toast.success(`Following ${profile.username}`);
       }
     } catch (error) {
       console.error('Failed to toggle follow:', error);
+      toast.error('Failed to update follow status');
     }
-  };
+  }, [isFollowing, profile]);
 
   if (loading) {
     return <div className="spinner"></div>;
   }
 
   if (!profile) {
-    return <div className="profile-error">User not found</div>;
+    return <div className="profile-error">{errorMessage || 'User not found'}</div>;
   }
 
   const isOwnProfile = currentUser && profile.id === currentUser.id;
@@ -66,7 +101,17 @@ function Profile() {
     <div className="profile">
       <div className="profile-container">
         <div className="profile-header">
-          <div className="profile-avatar-large">
+          <div 
+            className={`profile-avatar-large ${hasStory ? 'has-story' : isOwnProfile && !hasStory ? 'add-story' : ''}`}
+            onClick={() => {
+              if (hasStory) {
+                setViewingStory(true);
+              } else if (isOwnProfile) {
+                setShowCreateStory(true);
+              }
+            }}
+            style={{ cursor: (hasStory || isOwnProfile) ? 'pointer' : 'default' }}
+          >
             {profile.profile?.profile_picture ? (
               <img 
                 src={`http://localhost:8000/uploads/profiles/${profile.profile.profile_picture}`} 
@@ -77,13 +122,19 @@ function Profile() {
                 {profile.username?.[0]?.toUpperCase()}
               </div>
             )}
+            {isOwnProfile && !hasStory && <div className="add-story-icon-profile">+</div>}
           </div>
 
           <div className="profile-info">
             <div className="profile-info-row">
               <h1 className="profile-username">{profile.username}</h1>
               {isOwnProfile ? (
-                <button className="btn btn-secondary">Edit Profile</button>
+                <button 
+                  className="btn btn-secondary"
+                  onClick={() => setShowEditProfile(true)}
+                >
+                  Edit Profile
+                </button>
               ) : (
                 <button 
                   onClick={handleFollow}
@@ -150,6 +201,34 @@ function Profile() {
           )}
         </div>
       </div>
+
+      {showEditProfile && (
+        <EditProfile
+          user={profile}
+          onClose={() => setShowEditProfile(false)}
+          onUpdate={loadProfile}
+        />
+      )}
+
+      {viewingStory && (
+        <StoryViewer
+          userId={profile.id}
+          onClose={() => {
+            setViewingStory(false);
+            loadProfile(); // Reload to check if story was deleted
+          }}
+        />
+      )}
+
+      {showCreateStory && (
+        <CreateStory
+          onClose={() => setShowCreateStory(false)}
+          onStoryCreated={() => {
+            setShowCreateStory(false);
+            loadProfile(); // Reload to show new story
+          }}
+        />
+      )}
     </div>
   );
 }

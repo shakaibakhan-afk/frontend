@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+// Use environment variables for API URLs
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+export const UPLOADS_BASE_URL = import.meta.env.VITE_UPLOADS_BASE_URL || 'http://localhost:8000/uploads';
 
 // Create axios instance
 const api = axios.create({
@@ -20,6 +22,64 @@ api.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// Handle 401 errors and token refresh
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If 401 error and we haven't tried to refresh yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      // Don't try to refresh if this is a login or register request
+      if (originalRequest.url?.includes('/login') || originalRequest.url?.includes('/register')) {
+        return Promise.reject(error);
+      }
+
+      try {
+        const refreshToken = localStorage.getItem('refresh_token');
+        
+        if (refreshToken) {
+          // Try to refresh the access token
+          const response = await axios.post(`${API_BASE_URL}/users/refresh`, {
+            refresh_token: refreshToken
+          });
+
+          const { access_token, refresh_token: newRefreshToken } = response.data;
+          
+          // Store new tokens
+          localStorage.setItem('token', access_token);
+          if (newRefreshToken) {
+            localStorage.setItem('refresh_token', newRefreshToken);
+          }
+
+          // Retry original request with new token
+          originalRequest.headers.Authorization = `Bearer ${access_token}`;
+          return api(originalRequest);
+        } else {
+          // No refresh token, only redirect if not already on login page
+          if (!window.location.pathname.includes('/login')) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh_token');
+            window.location.href = '/login';
+          }
+        }
+      } catch (refreshError) {
+        // Refresh failed, only redirect if not already on login page
+        if (!window.location.pathname.includes('/login')) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('refresh_token');
+          window.location.href = '/login';
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+
+    return Promise.reject(error);
+  }
 );
 
 // Auth API
@@ -48,6 +108,11 @@ export const authAPI = {
 
 // Users API
 export const usersAPI = {
+  getAllUsers: async () => {
+    const response = await api.get('/users/');
+    return response.data;
+  },
+
   getUser: async (userId) => {
     const response = await api.get(`/users/${userId}`);
     return response.data;
@@ -134,10 +199,11 @@ export const postsAPI = {
 // Social API
 export const socialAPI = {
   // Comments
-  createComment: async (postId, text) => {
+  createComment: async (postId, text, parentId = null) => {
     const response = await api.post('/social/comments', {
       post_id: postId,
       text,
+      parent_id: parentId,  // For replies
     });
     return response.data;
   },
@@ -191,11 +257,7 @@ export const socialAPI = {
   },
   
   // Stories
-  createStory: async (caption, image) => {
-    const formData = new FormData();
-    if (caption) formData.append('caption', caption);
-    formData.append('image', image);
-    
+  createStory: async (formData) => {
     const response = await api.post('/social/stories', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
@@ -209,6 +271,24 @@ export const socialAPI = {
   
   getUserStories: async (userId) => {
     const response = await api.get(`/social/stories/user/${userId}`);
+    return response.data;
+  },
+
+  markStoryViewed: async (storyId) => {
+    await api.post(`/social/stories/${storyId}/view`);
+  },
+
+  getStoryViewers: async (storyId) => {
+    const response = await api.get(`/social/stories/${storyId}/views`);
+    return response.data;
+  },
+  
+  updateStory: async (storyId, caption) => {
+    const formData = new FormData();
+    formData.append('caption', caption);
+    const response = await api.put(`/social/stories/${storyId}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
   

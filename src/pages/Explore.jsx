@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { postsAPI } from '../services/api';
 import { Link } from 'react-router-dom';
+import { getPostImageUrl } from '../utils/imageUtils';
 import './Explore.css';
 
 function Explore() {
@@ -44,7 +45,7 @@ function Explore() {
                 className="explore-item"
               >
                 <img 
-                  src={`http://localhost:8000/uploads/posts/${post.image}`} 
+                  src={getPostImageUrl(post.image)} 
                   alt="Post" 
                 />
                 <div className="explore-overlay">

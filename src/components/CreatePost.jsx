@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { postsAPI } from '../services/api';
 import './CreatePost.css';
 
+const MAX_CAPTION_LENGTH = 150;
+
 function CreatePost({ onClose, onPostCreated }) {
   const [caption, setCaption] = useState('');
   const [image, setImage] = useState(null);
@@ -26,6 +28,10 @@ function CreatePost({ onClose, onPostCreated }) {
     e.preventDefault();
     if (!image) {
       setError('Please select an image');
+      return;
+    }
+    if (caption.trim().length > MAX_CAPTION_LENGTH) {
+      setError(`Caption cannot exceed ${MAX_CAPTION_LENGTH} characters.`);
       return;
     }
 
@@ -89,10 +95,14 @@ function CreatePost({ onClose, onPostCreated }) {
             <textarea
               placeholder="Write a caption..."
               value={caption}
-              onChange={(e) => setCaption(e.target.value)}
+              onChange={(e) => setCaption(e.target.value.slice(0, MAX_CAPTION_LENGTH))}
               rows="3"
               className="caption-input"
+              maxLength={MAX_CAPTION_LENGTH}
             />
+            <div className="char-counter">
+              {caption.length}/{MAX_CAPTION_LENGTH}
+            </div>
           </div>
 
           <div className="form-field">

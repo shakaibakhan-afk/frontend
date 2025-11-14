@@ -3,6 +3,12 @@
   border: 1px solid var(--border-color);
   border-radius: 8px;
   margin-bottom: 20px;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+[data-theme="dark"] .post-card {
+  background: #000000;
+  border-color: #363636;
 }
 
 .post-header {
@@ -104,6 +110,11 @@
 .post-caption {
   padding: 0 16px 8px;
   font-size: 14px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  word-break: break-word;
 }
 
 .caption-username {
@@ -113,6 +124,9 @@
 
 .caption-text {
   color: var(--text-color);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .post-comments {
@@ -120,32 +134,203 @@
   border-top: 1px solid var(--border-color);
 }
 
+.comment-wrapper {
+  margin-bottom: 16px;
+}
+
 .comment {
-  margin-bottom: 8px;
+  display: flex;
+  gap: 12px;
   font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.comment-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder-small {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.comment-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.comment-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .comment-username {
   font-weight: 600;
-  margin-right: 8px;
+  text-decoration: none;
+  color: var(--text-color);
+}
+
+.comment-username:hover {
+  text-decoration: underline;
 }
 
 .comment-text {
   color: var(--text-color);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  max-width: 100%;
+  display: inline;
 }
 
+.comment-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.comment-reply-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.comment-reply-btn:hover {
+  color: var(--text-color);
+}
+
+.comment-reply-btn.disabled,
+.comment-reply-btn:disabled {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.comment-delete-btn {
+  background: none;
+  border: none;
+  color: var(--error-color);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.2s;
+}
+
+.comment-delete-btn:hover {
+  opacity: 0.7;
+}
+
+.replies-count {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Nested Replies */
+.replies-list {
+  margin-top: 12px;
+  padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reply {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.reply .comment-avatar {
+  width: 28px;
+  height: 28px;
+}
+
+.reply .avatar-placeholder-small {
+  font-size: 12px;
+}
+
+/* Reply Form */
+.reply-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.reply-form .comment-input {
+  flex: 1;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.reply-form .comment-input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+}
+
+.comment-cancel {
+  color: var(--text-secondary);
+  font-weight: 600;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.comment-cancel:hover {
+  color: var(--text-color);
+}
+
+/* Main Comment Form */
 .comment-form {
   display: flex;
   gap: 12px;
   margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
 }
 
-.comment-input {
+.comment-form .comment-input {
   flex: 1;
   border: none;
   outline: none;
   font-size: 14px;
   padding: 8px 0;
+  background: transparent;
+  color: var(--text-color);
 }
 
 .comment-submit {

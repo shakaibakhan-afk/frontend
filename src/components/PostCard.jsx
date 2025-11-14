@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { socialAPI, postsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { getProfilePictureUrl } from '../utils/imageUtils';
 import './PostCard.css';
+
+const MAX_COMMENT_LENGTH = 150;
+const MAX_REPLY_LENGTH = 150;
 
 function PostCard({ post, onDelete }) {
   const [isLiked, setIsLiked] = useState(post.is_liked);
@@ -10,6 +15,8 @@ function PostCard({ post, onDelete }) {
   const [showComments, setShowComments] = useState(false);
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
+  const [replyingTo, setReplyingTo] = useState(null); // Track which comment is being replied to
+  const [replyText, setReplyText] = useState('');
   const { user } = useAuth();
 
   const handleLike = async () => {
@@ -25,19 +32,88 @@ function PostCard({ post, onDelete }) {
       }
     } catch (error) {
       console.error('Failed to toggle like:', error);
+      toast.error('Failed to toggle like');
     }
   };
 
   const handleComment = async (e) => {
     e.preventDefault();
     if (!comment.trim()) return;
+    if (comment.trim().length > MAX_COMMENT_LENGTH) {
+      toast.error(`Comments are limited to ${MAX_COMMENT_LENGTH} characters.`);
+      return;
+    }
 
     try {
-      const newComment = await socialAPI.createComment(post.id, comment);
+      const newComment = await socialAPI.createComment(post.id, comment.trim());
       setComments([...comments, newComment]);
       setComment('');
+      toast.success('Comment added!');
     } catch (error) {
       console.error('Failed to create comment:', error);
+      toast.error('Failed to add comment');
+    }
+  };
+
+  const handleReply = async (e, parentCommentId) => {
+    e.preventDefault();
+    if (!replyText.trim()) return;
+    if (replyText.trim().length > MAX_REPLY_LENGTH) {
+      toast.error(`Replies are limited to ${MAX_REPLY_LENGTH} characters.`);
+      return;
+    }
+
+    try {
+      const newReply = await socialAPI.createComment(post.id, replyText.trim(), parentCommentId);
+      
+      // Update the comments list to include the new reply
+      setComments(comments.map(comment => {
+        if (comment.id === parentCommentId) {
+          return {
+            ...comment,
+            replies: [...(comment.replies || []), newReply],
+            replies_count: (comment.replies_count || 0) + 1
+          };
+        }
+        return comment;
+      }));
+      
+      setReplyText('');
+      setReplyingTo(null);
+      toast.success('Reply added!');
+    } catch (error) {
+      console.error('Failed to create reply:', error);
+      toast.error(error.response?.data?.detail || 'Failed to add reply');
+    }
+  };
+
+  const handleDeleteComment = async (commentId, isReply = false, parentCommentId = null) => {
+    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+
+    try {
+      await socialAPI.deleteComment(commentId);
+      
+      if (isReply && parentCommentId) {
+        // Remove reply from parent comment
+        setComments(comments.map(comment => {
+          if (comment.id === parentCommentId) {
+            return {
+              ...comment,
+              replies: comment.replies.filter(reply => reply.id !== commentId),
+              replies_count: Math.max(0, (comment.replies_count || 0) - 1)
+            };
+          }
+          return comment;
+        }));
+      } else {
+        // Remove parent comment
+        setComments(comments.filter(comment => comment.id !== commentId));
+      }
+      
+      toast.success('Comment deleted!');
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+      toast.error(error.response?.data?.detail || 'Failed to delete comment');
     }
   };
 
@@ -48,6 +124,7 @@ function PostCard({ post, onDelete }) {
         setComments(data);
       } catch (error) {
         console.error('Failed to load comments:', error);
+        toast.error('Failed to load comments');
       }
     }
     setShowComments(!showComments);
@@ -122,20 +199,148 @@ function PostCard({ post, onDelete }) {
       {showComments && (
         <div className="post-comments">
           {comments.map(comment => (
-            <div key={comment.id} className="comment">
-              <Link to={`/profile/${comment.username}`} className="comment-username">
-                {comment.username}
-              </Link>
-              <span className="comment-text">{comment.text}</span>
+            <div key={comment.id} className="comment-wrapper">
+              {/* Parent Comment */}
+              <div className="comment">
+                <div className="comment-avatar">
+                  {comment.user_profile_picture ? (
+                    <img 
+                      src={getProfilePictureUrl(comment.user_profile_picture)} 
+                      alt={comment.username}
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="avatar-placeholder-small">
+                      {comment.username?.[0]?.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <div className="comment-content">
+                  <div className="comment-main">
+                    <Link to={`/profile/${comment.username}`} className="comment-username">
+                      {comment.username}
+                    </Link>
+                    <span className="comment-text">{comment.text}</span>
+                  </div>
+                  <div className="comment-actions">
+                    {(() => {
+                      const userHasReplied = comment.replies?.some(reply => reply.user_id === user?.id);
+                      return (
+                        <button 
+                          onClick={() => !userHasReplied && setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                          className={`comment-reply-btn ${userHasReplied ? 'disabled' : ''}`}
+                          disabled={userHasReplied}
+                          title={userHasReplied ? "You've already replied to this comment" : "Reply to this comment"}
+                        >
+                          {userHasReplied ? 'Replied' : 'Reply'}
+                        </button>
+                      );
+                    })()}
+                    {comment.replies_count > 0 && (
+                      <span className="replies-count">
+                        {comment.replies_count} {comment.replies_count === 1 ? 'reply' : 'replies'}
+                      </span>
+                    )}
+                    {comment.user_id === user?.id && (
+                      <button 
+                        onClick={() => handleDeleteComment(comment.id)}
+                        className="comment-delete-btn"
+                        title="Delete comment"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Nested Replies */}
+                  {comment.replies && comment.replies.length > 0 && (
+                    <div className="replies-list">
+                      {comment.replies.map(reply => (
+                        <div key={reply.id} className="reply">
+                          <div className="comment-avatar">
+                            {reply.user_profile_picture ? (
+                              <img 
+                                src={getProfilePictureUrl(reply.user_profile_picture)} 
+                                alt={reply.username}
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="avatar-placeholder-small">
+                                {reply.username?.[0]?.toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+                          <div className="comment-content">
+                            <div className="comment-main">
+                              <Link to={`/profile/${reply.username}`} className="comment-username">
+                                {reply.username}
+                              </Link>
+                              <span className="comment-text">{reply.text}</span>
+                            </div>
+                            {reply.user_id === user?.id && (
+                              <div className="comment-actions">
+                                <button 
+                                  onClick={() => handleDeleteComment(reply.id, true, comment.id)}
+                                  className="comment-delete-btn"
+                                  title="Delete reply"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Reply Input */}
+                  {replyingTo === comment.id && (
+                    <form onSubmit={(e) => handleReply(e, comment.id)} className="reply-form">
+                      <input
+                        type="text"
+                        placeholder={`Reply to ${comment.username}...`}
+                        value={replyText}
+                        onChange={(e) => {
+                          const value = e.target.value.slice(0, MAX_REPLY_LENGTH);
+                          setReplyText(value);
+                        }}
+                        className="comment-input"
+                        autoFocus
+                        maxLength={MAX_REPLY_LENGTH}
+                      />
+                      <button type="submit" disabled={!replyText.trim()} className="comment-submit">
+                        Reply
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          setReplyingTo(null);
+                          setReplyText('');
+                        }} 
+                        className="comment-cancel"
+                      >
+                        Cancel
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
             </div>
           ))}
+          
+          {/* Main Comment Form */}
           <form onSubmit={handleComment} className="comment-form">
             <input
               type="text"
               placeholder="Add a comment..."
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.slice(0, MAX_COMMENT_LENGTH);
+                setComment(value);
+              }}
               className="comment-input"
+              maxLength={MAX_COMMENT_LENGTH}
             />
             <button type="submit" disabled={!comment.trim()} className="comment-submit">
               Post

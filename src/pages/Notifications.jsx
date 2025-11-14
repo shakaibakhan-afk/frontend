@@ -1,26 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { notificationsAPI } from '../services/api';
+import { useNotifications } from '../contexts/NotificationContext';
+import { getProfilePictureUrl } from '../utils/imageUtils';
 import './Notifications.css';
 
 function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { refreshUnreadCount } = useNotifications();
+
+  const loadNotifications = useCallback(
+    async (showSpinner = false) => {
+      if (showSpinner) {
+        setLoading(true);
+      }
+      try {
+        const data = await notificationsAPI.getNotifications();
+        setNotifications(data);
+        refreshUnreadCount();
+      } catch (error) {
+        console.error('Failed to load notifications:', error);
+      } finally {
+        if (showSpinner) {
+          setLoading(false);
+        }
+      }
+    },
+    [refreshUnreadCount]
+  );
 
   useEffect(() => {
-    loadNotifications();
-  }, []);
-
-  const loadNotifications = async () => {
-    try {
-      const data = await notificationsAPI.getNotifications();
-      setNotifications(data);
-    } catch (error) {
-      console.error('Failed to load notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    loadNotifications(true);
+    const interval = setInterval(() => loadNotifications(false), 15000);
+    return () => clearInterval(interval);
+  }, [loadNotifications]);
 
   const handleMarkAsRead = async (notificationId) => {
     try {
@@ -28,6 +42,7 @@ function Notifications() {
       setNotifications(notifications.map(n => 
         n.id === notificationId ? { ...n, is_read: true } : n
       ));
+      refreshUnreadCount(); // Refresh badge count
     } catch (error) {
       console.error('Failed to mark as read:', error);
     }
@@ -37,6 +52,7 @@ function Notifications() {
     try {
       await notificationsAPI.markAllAsRead();
       setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      refreshUnreadCount(); // Refresh badge count
     } catch (error) {
       console.error('Failed to mark all as read:', error);
     }
@@ -85,7 +101,7 @@ function Notifications() {
                 >
                   {notification.sender_profile_picture ? (
                     <img 
-                      src={`http://localhost:8000/uploads/profiles/${notification.sender_profile_picture}`} 
+                      src={getProfilePictureUrl(notification.sender_profile_picture)} 
                       alt={notification.sender_username} 
                     />
                   ) : (

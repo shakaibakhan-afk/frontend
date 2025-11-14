@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 import './Auth.css';
 
@@ -9,8 +10,14 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { login } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate('/');
+    }
+  }, [authLoading, user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,9 +26,12 @@ function Login() {
 
     try {
       await login(username, password);
+      toast.success('Welcome back!');
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to login. Please check your credentials.');
+      const errorMsg = err.response?.data?.detail || 'Failed to login. Please check your credentials.';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -30,12 +40,12 @@ function Login() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1 className="auth-logo">Instagram Clone</h1>
+        <h1 className="auth-logo">Instagram</h1>
         
         <form onSubmit={handleSubmit} className="auth-form">
           <input
             type="text"
-            placeholder="Username"
+            placeholder="Phone number, username or email address"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
@@ -61,6 +71,14 @@ function Login() {
             {loading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
+        
+        <div className="auth-divider">
+          <div className="auth-divider-line"></div>
+          <div className="auth-divider-text">OR</div>
+          <div className="auth-divider-line"></div>
+        </div>
+        
+        <a href="#" className="auth-forgot">Forgotten your password?</a>
       </div>
       
       <div className="auth-card auth-signup">
@@ -68,6 +86,18 @@ function Login() {
           Don't have an account?{' '}
           <Link to="/register" className="auth-link">Sign up</Link>
         </p>
+      </div>
+      
+      <div className="auth-footer">
+        <p>Get the app.</p>
+        <div className="auth-app-buttons">
+          <a href="#" className="app-button">
+            <img src="https://www.instagram.com/static/images/appstore-install-badges/badge_android_english-en.png/e9cd846dc748.png" alt="Get it on Google Play" />
+          </a>
+          <a href="#" className="app-button">
+            <img src="https://www.instagram.com/static/images/appstore-install-badges/badge_ios_english-en.png/180ae7a0bcf7.png" alt="Get it from Microsoft" />
+          </a>
+        </div>
       </div>
     </div>
   );
