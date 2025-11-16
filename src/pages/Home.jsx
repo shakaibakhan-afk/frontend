@@ -3,7 +3,7 @@ import toast from 'react-hot-toast';
 import { postsAPI, socialAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfilePictureUrl } from '../utils/imageUtils';
-import './Home.css';
+import '../styling/Home.css';
 
 // Lazy load components for better performance
 const PostCard = lazy(() => import('../components/PostCard'));

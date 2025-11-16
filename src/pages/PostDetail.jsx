@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { postsAPI } from '../services/api';
 import PostCard from '../components/PostCard';
-import './PostDetail.css';
+import '../styling/PostDetail.css';
 
 function PostDetail() {
   const { postId } = useParams();

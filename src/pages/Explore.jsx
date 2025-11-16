@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { postsAPI } from '../services/api';
 import { Link } from 'react-router-dom';
 import { getPostImageUrl } from '../utils/imageUtils';
-import './Explore.css';
+import '../styling/Explore.css';
 
 function Explore() {
   const [posts, setPosts] = useState([]);

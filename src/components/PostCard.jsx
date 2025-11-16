@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { socialAPI, postsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfilePictureUrl } from '../utils/imageUtils';
-import './PostCard.css';
+import '../styling/PostCard.css';
 
 const MAX_COMMENT_LENGTH = 150;
 const MAX_REPLY_LENGTH = 150;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { usersAPI } from '../services/api';
 import { getProfilePictureUrl } from '../utils/imageUtils';
-import './Search.css';
+import '../styling/Search.css';
 
 function Search() {
   const [searchQuery, setSearchQuery] = useState('');

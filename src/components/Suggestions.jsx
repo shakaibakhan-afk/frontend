@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { usersAPI, socialAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfilePictureUrl } from '../utils/imageUtils';
-import './Suggestions.css';
+import '../styling/Suggestions.css';
 
 function Suggestions() {
   const { user } = useAuth();

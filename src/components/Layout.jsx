@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { getProfilePictureUrl } from '../utils/imageUtils';
 import CreatePost from './CreatePost';
 import CreateStory from './CreateStory';
-import './Layout.css';
+import '../styling/Layout.css';
 
 function Layout({ children }) {
   const { user, logout } = useAuth();

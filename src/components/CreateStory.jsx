@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { socialAPI } from '../services/api';
-import './CreateStory.css';
+import '../styling/CreateStory.css';
 
 function CreateStory({ onClose, onStoryCreated }) {
   const [media, setMedia] = useState(null);

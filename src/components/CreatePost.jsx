@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { postsAPI } from '../services/api';
-import './CreatePost.css';
+import '../styling/CreatePost.css';
 
 const MAX_CAPTION_LENGTH = 150;
 

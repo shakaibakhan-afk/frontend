@@ -7,7 +7,7 @@ import { getProfilePictureUrl, getPostImageUrl } from '../utils/imageUtils';
 import EditProfile from '../components/EditProfile';
 import StoryViewer from '../components/StoryViewer';
 import CreateStory from '../components/CreateStory';
-import './Profile.css';
+import '../styling/Profile.css';
 
 function Profile() {
   const { username } = useParams();

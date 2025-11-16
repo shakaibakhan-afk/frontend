@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { socialAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfilePictureUrl, getStoryMediaUrl } from '../utils/imageUtils';
-import './StoryViewer.css';
+import '../styling/StoryViewer.css';
 
 function StoryViewer({ userId, onClose }) {
   const { user: currentUser } = useAuth();

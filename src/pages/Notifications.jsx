@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { notificationsAPI } from '../services/api';
 import { useNotifications } from '../contexts/NotificationContext';
 import { getProfilePictureUrl } from '../utils/imageUtils';
-import './Notifications.css';
+import '../styling/Notifications.css';
 
 function Notifications() {
   const [notifications, setNotifications] = useState([]);

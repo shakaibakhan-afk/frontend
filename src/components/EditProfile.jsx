@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { usersAPI } from '../services/api';
-import './EditProfile.css';
+import '../styling/EditProfile.css';
 
 function EditProfile({ user, onClose, onUpdate }) {
   const [formData, setFormData] = useState({

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
-import './Auth.css';
+import '../styling/Auth.css';
 
 function Login() {
   const [username, setUsername] = useState('');

@@ -11,7 +11,7 @@ import PostDetail from './pages/PostDetail'
 import Search from './pages/Search'
 import Notifications from './pages/Notifications'
 import Layout from './components/Layout'
-import './App.css'
+import './styling/App.css'
 
 // Protected Route Component
 function ProtectedRoute({ children }) {
