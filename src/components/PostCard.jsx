@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { socialAPI, postsAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { getProfilePictureUrl } from '../utils/imageUtils';
+import { getProfilePictureUrl, getPostImageUrl } from '../utils/imageUtils';
 import '../styling/PostCard.css';
 
 const MAX_COMMENT_LENGTH = 150;
@@ -17,9 +17,13 @@ function PostCard({ post, onDelete }) {
   const [comments, setComments] = useState([]);
   const [replyingTo, setReplyingTo] = useState(null); // Track which comment is being replied to
   const [replyText, setReplyText] = useState('');
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
   const { user } = useAuth();
 
   const handleLike = async () => {
+    if (isLikeLoading) return; // Prevent double-click
+    
+    setIsLikeLoading(true);
     try {
       if (isLiked) {
         await socialAPI.unlikePost(post.id);
@@ -33,6 +37,8 @@ function PostCard({ post, onDelete }) {
     } catch (error) {
       console.error('Failed to toggle like:', error);
       toast.error('Failed to toggle like');
+    } finally {
+      setIsLikeLoading(false);
     }
   };
 
@@ -148,7 +154,7 @@ function PostCard({ post, onDelete }) {
           <div className="post-avatar">
             {post.user_profile_picture ? (
               <img 
-                src={`http://localhost:8000/uploads/profiles/${post.user_profile_picture}`} 
+                src={getProfilePictureUrl(post.user_profile_picture)} 
                 alt={post.username} 
               />
             ) : (
@@ -163,12 +169,17 @@ function PostCard({ post, onDelete }) {
       </div>
 
       <div className="post-image">
-        <img src={`http://localhost:8000/uploads/posts/${post.image}`} alt="Post" />
+        <img src={getPostImageUrl(post.image)} alt="Post" />
       </div>
 
       <div className="post-actions">
-        <button onClick={handleLike} className={`action-btn ${isLiked ? 'liked' : ''}`}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+        <button 
+          onClick={handleLike} 
+          className={`action-btn ${isLiked ? 'liked' : ''}`}
+          disabled={isLikeLoading}
+          aria-label={isLiked ? "Unlike post" : "Like post"}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
             {isLiked ? (
               <path fillRule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
             ) : (

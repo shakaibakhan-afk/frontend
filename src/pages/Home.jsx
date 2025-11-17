@@ -57,6 +57,24 @@ function Home() {
     loadStories();
   }, [loadPosts, loadStories]);
 
+  // Listen for post/story creation events from Layout modals
+  useEffect(() => {
+    const handlePostCreated = () => {
+      loadPosts();
+    };
+    const handleStoryCreated = () => {
+      loadStories();
+    };
+
+    window.addEventListener('postCreated', handlePostCreated);
+    window.addEventListener('storyCreated', handleStoryCreated);
+
+    return () => {
+      window.removeEventListener('postCreated', handlePostCreated);
+      window.removeEventListener('storyCreated', handleStoryCreated);
+    };
+  }, [loadPosts, loadStories]);
+
   const handlePostCreated = useCallback((newPost) => {
     setPosts(prevPosts => [newPost, ...prevPosts]);
     setShowCreatePost(false);

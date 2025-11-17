@@ -21,6 +21,7 @@ function Profile() {
   const [hasStory, setHasStory] = useState(false);
   const [viewingStory, setViewingStory] = useState(false);
   const [showCreateStory, setShowCreateStory] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
 
   // Use useCallback to memoize loadProfile function
   const loadProfile = useCallback(async () => {
@@ -69,6 +70,9 @@ function Profile() {
   }, [loadProfile]);
 
   const handleFollow = useCallback(async () => {
+    if (isFollowLoading) return; // Prevent double-click
+    
+    setIsFollowLoading(true);
     try {
       if (isFollowing) {
         await socialAPI.unfollowUser(profile.id);
@@ -84,8 +88,10 @@ function Profile() {
     } catch (error) {
       console.error('Failed to toggle follow:', error);
       toast.error('Failed to update follow status');
+    } finally {
+      setIsFollowLoading(false);
     }
-  }, [isFollowing, profile]);
+  }, [isFollowing, profile, isFollowLoading]);
 
   if (loading) {
     return <div className="spinner"></div>;
@@ -114,7 +120,7 @@ function Profile() {
           >
             {profile.profile?.profile_picture ? (
               <img 
-                src={`http://localhost:8000/uploads/profiles/${profile.profile.profile_picture}`} 
+                src={getProfilePictureUrl(profile.profile.profile_picture)} 
                 alt={profile.username} 
               />
             ) : (
@@ -139,8 +145,9 @@ function Profile() {
                 <button 
                   onClick={handleFollow}
                   className={`btn ${isFollowing ? 'btn-secondary' : 'btn-primary'}`}
+                  disabled={isFollowLoading}
                 >
-                  {isFollowing ? 'Unfollow' : 'Follow'}
+                  {isFollowLoading ? 'Loading...' : (isFollowing ? 'Unfollow' : 'Follow')}
                 </button>
               )}
             </div>
@@ -188,7 +195,7 @@ function Profile() {
               {posts.map(post => (
                 <Link key={post.id} to={`/post/${post.id}`} className="post-grid-item">
                   <img 
-                    src={`http://localhost:8000/uploads/posts/${post.image}`} 
+                    src={getPostImageUrl(post.image)} 
                     alt="Post" 
                   />
                   <div className="post-overlay">

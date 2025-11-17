@@ -8,7 +8,6 @@ function CreatePost({ onClose, onPostCreated }) {
   const [caption, setCaption] = useState('');
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [tags, setTags] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -39,7 +38,7 @@ function CreatePost({ onClose, onPostCreated }) {
     setError('');
 
     try {
-      const newPost = await postsAPI.createPost(caption, image, tags);
+      const newPost = await postsAPI.createPost(caption, image, '');
       onPostCreated(newPost);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to create post');
@@ -103,16 +102,6 @@ function CreatePost({ onClose, onPostCreated }) {
             <div className="char-counter">
               {caption.length}/{MAX_CAPTION_LENGTH}
             </div>
-          </div>
-
-          <div className="form-field">
-            <input
-              type="text"
-              placeholder="Tags (comma separated)"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              className="tags-input"
-            />
           </div>
 
           {error && <div className="error-message">{error}</div>}

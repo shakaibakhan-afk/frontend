@@ -10,6 +10,7 @@ import Profile from './pages/Profile'
 import PostDetail from './pages/PostDetail'
 import Search from './pages/Search'
 import Notifications from './pages/Notifications'
+import Explore from './pages/Explore'
 import Layout from './components/Layout'
 import './styling/App.css'
 
@@ -83,6 +84,13 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Search />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          <Route path="/explore" element={
+            <ProtectedRoute>
+              <Layout>
+                <Explore />
               </Layout>
             </ProtectedRoute>
           } />
