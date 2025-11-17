@@ -161,10 +161,7 @@ function Layout({ children }) {
           onClose={() => setShowCreatePost(false)}
           onPostCreated={() => {
             setShowCreatePost(false);
-            // Dispatch custom event to trigger page refresh
             window.dispatchEvent(new CustomEvent('postCreated'));
-            // If on home page, it will handle the refresh via event listener
-            // Otherwise, navigate to home to see the new post
             if (location.pathname !== '/') {
               navigate('/');
             }
@@ -178,9 +175,7 @@ function Layout({ children }) {
           onClose={() => setShowCreateStory(false)}
           onStoryCreated={() => {
             setShowCreateStory(false);
-            // Dispatch custom event to trigger page refresh
             window.dispatchEvent(new CustomEvent('storyCreated'));
-            // If on home page, it will handle the refresh via event listener
             if (location.pathname !== '/') {
               navigate('/');
             }

@@ -15,13 +15,13 @@ function PostCard({ post, onDelete }) {
   const [showComments, setShowComments] = useState(false);
   const [comment, setComment] = useState('');
   const [comments, setComments] = useState([]);
-  const [replyingTo, setReplyingTo] = useState(null); // Track which comment is being replied to
+  const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [isLikeLoading, setIsLikeLoading] = useState(false);
   const { user } = useAuth();
 
   const handleLike = async () => {
-    if (isLikeLoading) return; // Prevent double-click
+    if (isLikeLoading) return;
     
     setIsLikeLoading(true);
     try {
@@ -72,7 +72,6 @@ function PostCard({ post, onDelete }) {
     try {
       const newReply = await socialAPI.createComment(post.id, replyText.trim(), parentCommentId);
       
-      // Update the comments list to include the new reply
       setComments(comments.map(comment => {
         if (comment.id === parentCommentId) {
           return {
@@ -100,7 +99,6 @@ function PostCard({ post, onDelete }) {
       await socialAPI.deleteComment(commentId);
       
       if (isReply && parentCommentId) {
-        // Remove reply from parent comment
         setComments(comments.map(comment => {
           if (comment.id === parentCommentId) {
             return {
@@ -112,7 +110,6 @@ function PostCard({ post, onDelete }) {
           return comment;
         }));
       } else {
-        // Remove parent comment
         setComments(comments.filter(comment => comment.id !== commentId));
       }
       
